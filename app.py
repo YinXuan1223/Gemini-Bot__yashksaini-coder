@@ -9,6 +9,7 @@ load_dotenv('.env')
 client = genai.Client(api_key=os.getenv('API_KEY'))
 chat_model = client.chats.create(model='gemini-2.5-flash')
 
+img_model = 'gemini-2.5-flash'
 
 app = Flask(__name__)
 
@@ -22,13 +23,13 @@ def home():
 def chat():
     if request.method == 'POST':
         query = request.json['query']
-        print(f'query:{query}')
+        
         if (len(query.strip()) == 0):
             return jsonify("Please enter something!")
         try:
             gemini_response = chat_model.send_message(
                 query).text  # Send message based on the chat history
-            print(f'gemini_response: {gemini_response}')
+            
         except:
             return jsonify("Something went wrong!")
 
@@ -40,19 +41,20 @@ def chat():
 @app.route("/image_chat", methods=['POST', 'GET'])
 def image_chat():
     
-    # if request.method == 'POST':
-    #     img = request.files['image']   # Loads the file
-    #     q = request.form['query']   # Loads the query
+    if request.method == 'POST':
+        img = request.files['image']   # Loads the file
+        q = request.form['query']   # Loads the query
 
-    #     image = Image.open(img)   # Read the image in PIL format
-    #     try:
-    #         response = img_model.generate_content(
-    #             [q, image])   # Generate content for the image
-    #     except:  # noqa: E722
-    #         return jsonify("Something went wrong!")
-    #     return jsonify(markdown(response.text))
-    # else:
-         return render_template("image_upload.html")
+        image = Image.open(img)   # Read the image in PIL format
+        try:
+            response = client.models.generate_content(
+                model=img_model,
+                contents=[q, image])   # Generate content for the image
+        except:  # noqa: E722
+            return jsonify("Something went wrong!")
+        return jsonify(markdown(response.text))
+    else:
+        return render_template("image_upload.html")
 
 
 if __name__ == "__main__":
